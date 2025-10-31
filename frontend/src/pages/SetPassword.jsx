@@ -69,18 +69,15 @@ export default function SetPassword() {
       
       if (updateError) throw updateError
 
-      // Show success message immediately
-      setMessage('Password set successfully! Redirecting to sign in...')
-
+      // Show success message
+      setMessage('Password set successfully! Please sign in with your new password.')
+      
       // Sign out and redirect to login page
       // This ensures they log in with the new password
-      await supabase.auth.signOut()
-      
-      // Small delay to show success message
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Redirect to login page
-      window.location.href = '/login'
+      setTimeout(async () => {
+        await supabase.auth.signOut()
+        window.location.href = '/login'
+      }, 500)
 
     } catch (err) {
       console.error('Password update error:', err)
@@ -147,6 +144,16 @@ export default function SetPassword() {
         >
           {loading ? 'Setting password...' : 'Set Password'}
         </button>
+        {message && message.includes('success') && (
+          <div className="text-center">
+            <a 
+              href="/login" 
+              className="text-sm text-blue-600 hover:text-blue-700 underline"
+            >
+              Go to Sign In →
+            </a>
+          </div>
+        )}
       </form>
     </div>
   )
