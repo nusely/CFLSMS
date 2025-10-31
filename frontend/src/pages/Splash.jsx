@@ -21,7 +21,7 @@ export default function Splash() {
           navigate('/welcome', { replace: true })
         }
       }, 500) // Match animation duration (0.5s)
-    }, 2000) // 2 seconds
+    }, 3500) // 3.5 seconds
 
     return () => clearTimeout(timer)
   }, [navigate, session, loading])
