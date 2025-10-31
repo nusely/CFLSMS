@@ -37,7 +37,9 @@ export function parseCSV(text) {
     const obj = {}
     headers.forEach((header, idx) => {
       // Remove quotes and trim
-      const value = (values[idx] ?? '').trim().replace(/^["']|["']$/g, '')
+      let value = (values[idx] ?? '').trim().replace(/^["']|["']$/g, '')
+      // Remove leading quote/apostrophe if present (Excel/CSV export artifact)
+      if (value.startsWith("'")) value = value.slice(1)
       obj[header] = value
     })
     rows.push(obj)

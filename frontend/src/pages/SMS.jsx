@@ -25,13 +25,13 @@ export default function SMS() {
 
   const getRecipientPhones = () => {
     if (inputMode === 'group' && selectedGroup) {
-      // Get phones from selected group
-      return groupPhones.filter(Boolean)
+      // Get phones from selected group - normalize to ensure clean format
+      return groupPhones.map(p => toE164Digits(p)).filter(Boolean)
     }
     if (inputMode === 'contact' && selectedContact) {
       // Find contact by comparing IDs as strings (select value is always string)
       const contact = contacts.find(c => String(c.id) === String(selectedContact))
-      return contact ? [contact.phone] : []
+      return contact ? [toE164Digits(contact.phone)].filter(Boolean) : []
     }
     // Manual mode: split by newline, filter empty, validate E.164
     return recipients.split('\n')
