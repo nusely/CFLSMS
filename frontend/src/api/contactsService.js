@@ -13,16 +13,31 @@ export async function listContacts() {
 export async function addContact(contact) {
   const normalized = toE164Digits(contact.phone)
   if (!normalized) throw new Error('Invalid phone number. Use international E.164 format.')
-  const { data, error } = await supabase.from('contacts').insert({ first_name: contact.first_name, last_name: contact.last_name, phone: normalized, groups: contact.groups }).select().single()
+  
+  // Get current user to set owner
+  const { data: user } = await supabase.auth.getUser()
+  if (!user?.user) throw new Error('Not authenticated')
+  
+  const { data, error } = await supabase.from('contacts').insert({ 
+    first_name: contact.first_name, 
+    last_name: contact.last_name, 
+    phone: normalized, 
+    groups: contact.groups,
+    owner_user_id: user.user.id
+  }).select().single()
   if (error) throw error
   return data
 }
 
 export async function upsertContacts(contacts) {
+  // Get current user to set owner
+  const { data: user } = await supabase.auth.getUser()
+  if (!user?.user) throw new Error('Not authenticated')
+  
   const sanitized = contacts.map(c => {
     const normalized = toE164Digits(c.phone)
     if (!normalized) throw new Error(`Invalid phone: ${c.phone}`)
-    return { first_name: c.first_name, last_name: c.last_name, phone: normalized, groups: c.groups }
+    return { first_name: c.first_name, last_name: c.last_name, phone: normalized, groups: c.groups, owner_user_id: user.user.id }
   })
   const { data, error } = await supabase.from('contacts').upsert(sanitized, { onConflict: 'phone' }).select()
   if (error) throw error
