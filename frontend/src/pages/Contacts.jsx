@@ -609,7 +609,7 @@ export default function Contacts() {
                         const isInGroup = groupMembers.some(m => m.contact_id === contact.id)
                         const isSelected = contactsToAdd.includes(contact.id)
                         return (
-                          <tr key={contact.id} className={`odd:bg-slate-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                          <tr key={contact.id} className={`odd:bg-slate-50 ${isSelected ? 'bg-blue-50' : ''} text-slate-900`}>
                             <td className="px-3 py-2">
                               <input
                                 type="checkbox"
@@ -625,14 +625,14 @@ export default function Contacts() {
                                 className="rounded border-slate-300"
                               />
                             </td>
-                            <td className="px-3 py-2">{contact.first_name}</td>
-                            <td className="px-3 py-2">{contact.last_name}</td>
-                            <td className="px-3 py-2 font-mono text-xs">{formatDisplayE164(contact.phone)}</td>
+                            <td className="px-3 py-2 text-slate-900">{contact.first_name}</td>
+                            <td className="px-3 py-2 text-slate-900">{contact.last_name}</td>
+                            <td className="px-3 py-2 font-mono text-xs text-slate-900">{formatDisplayE164(contact.phone)}</td>
                             <td className="px-3 py-2">
                               {isInGroup ? (
                                 <span className="text-xs text-green-600"><i className="fas fa-check-circle mr-1"></i>In Group</span>
                               ) : (
-                                <span className="text-xs text-slate-500">Not in group</span>
+                                <span className="text-xs text-slate-600">Not in group</span>
                               )}
                             </td>
                           </tr>
