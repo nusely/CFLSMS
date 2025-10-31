@@ -18,3 +18,7 @@ pnpm-debug.log*
 # Editors
 .vscode/
 .idea/
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
