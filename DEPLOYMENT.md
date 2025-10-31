@@ -27,7 +27,7 @@ The frontend is already configured with:
    - **Project name:** `cfl-sms` (or your choice)
    - **Production branch:** `main`
    - **Framework preset:** `VitePreset` (may show wrong auto-detected commands, ignore them)
-   - **Build command:** `cd frontend && npm run build` ⚠️ **IMPORTANT: Override the auto-detected command**
+   - **Build command:** `cd frontend && npm ci && npm run build` ⚠️ **IMPORTANT: Override the auto-detected command**
    - **Build output directory:** `frontend/dist` ⚠️ **IMPORTANT: Override to `frontend/dist`, NOT `.vitepress/dist`**
 
 ### 3. Add Environment Variables
@@ -48,18 +48,11 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
    - Provision SSL certificate
    - Enable DDoS protection
 
-### 5. Update Build Settings (Optional)
-
-If you need to install dependencies, update the build command:
-```
-cd frontend && npm ci && npm run build
-```
-
-### 6. Deploy
+### 5. Deploy
 
 Push changes to `main` branch. Cloudflare Pages will automatically deploy.
 
-### 7. Update README.md
+### 6. Update README.md
 
 Once deployed, update `README.md` with the production URL.
 
