@@ -41,6 +41,32 @@ export default function SMS() {
       .filter(phone => phone)
   }
 
+  const getRecipientContacts = async () => {
+    const phones = getRecipientPhones()
+    const allContacts = [...contacts]
+    
+    // If group mode, fetch group members
+    if (inputMode === 'group' && selectedGroup) {
+      const { listMembers } = await import('../api/contactsService')
+      const members = await listMembers(selectedGroup)
+      members.forEach(m => {
+        if (m.contacts && !allContacts.find(c => c.phone === m.contacts.phone)) {
+          allContacts.push(m.contacts)
+        }
+      })
+    }
+    
+    // Map phones to contacts
+    return phones.map(phone => {
+      const contact = allContacts.find(c => c.phone === phone)
+      return {
+        phone,
+        first_name: contact?.first_name,
+        last_name: contact?.last_name
+      }
+    })
+  }
+
   // Memoize options for SearchableSelect components to prevent hook order issues
   const groupOptions = useMemo(() => [
     { value: '', label: 'Select a group...' },
@@ -68,16 +94,25 @@ export default function SMS() {
 
     try {
       if (scheduledAt && new Date(scheduledAt) > new Date()) {
+        // Get recipient contacts with names for personalization
+        const recipientContacts = await getRecipientContacts()
+        
         // Schedule each recipient separately
         let scheduledCount = 0
         let failedCount = 0
-        for (const phone of phones) {
+        for (const contact of recipientContacts) {
           try {
-            await schedule.mutateAsync({ recipient: phone, message, scheduledAt })
+            await schedule.mutateAsync({ 
+              recipient: contact.phone, 
+              message, 
+              scheduledAt,
+              first_name: contact.first_name,
+              last_name: contact.last_name
+            })
             scheduledCount++
           } catch (err) {
             failedCount++
-            console.error(`Failed to schedule ${phone}:`, err)
+            console.error(`Failed to schedule ${contact.phone}:`, err)
           }
         }
         if (failedCount === 0) {
@@ -232,7 +267,24 @@ export default function SMS() {
           <div>
             <label className="block text-sm font-medium mb-2 text-slate-700">Message</label>
             <textarea value={message} onChange={(e)=>setMessage(e.target.value)} rows={4} className="w-full rounded-lg bg-slate-50 border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900" />
-            <div className="text-xs text-slate-500 mt-1">Use placeholders: {'{{first_name}}'}, {'{{last_name}}'}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Use placeholders: 
+              <button 
+                type="button"
+                onClick={() => setMessage(message + '{{first_name}}')}
+                className="ml-1 text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+              >
+                {'{{first_name}}'}
+              </button>
+              , 
+              <button 
+                type="button"
+                onClick={() => setMessage(message + '{{last_name}}')}
+                className="ml-1 text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+              >
+                {'{{last_name}}'}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-slate-700">Schedule (optional)</label>
