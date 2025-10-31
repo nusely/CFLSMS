@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuthContext } from '../context/AuthContext'
 
 export default function Splash() {
   const navigate = useNavigate()
+  const { session, loading } = useAuthContext()
   const [isSliding, setIsSliding] = useState(false)
 
   useEffect(() => {
+    if (loading) return // Wait for auth to load
+    
     const timer = setTimeout(() => {
       setIsSliding(true)
       // Navigate after slide animation completes
       setTimeout(() => {
-        navigate('/welcome', { replace: true })
+        // If user is logged in, skip to dashboard
+        if (session) {
+          navigate('/dashboard', { replace: true })
+        } else {
+          navigate('/welcome', { replace: true })
+        }
       }, 500) // Match animation duration (0.5s)
     }, 2000) // 2 seconds
 
     return () => clearTimeout(timer)
-  }, [navigate])
+  }, [navigate, session, loading])
 
   return (
     <div 

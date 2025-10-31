@@ -30,10 +30,12 @@ export default function Contacts() {
   const [showGroupModal, setShowGroupModal] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [contactsToAdd, setContactsToAdd] = useState([]) // Selected contacts to add to group
+  const [groupModalSearch, setGroupModalSearch] = useState('') // Search filter for group modal
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renamingGroupId, setRenamingGroupId] = useState(null)
   const [newGroupName, setNewGroupName] = useState('')
   const [deletingGroupId, setDeletingGroupId] = useState(null)
+  const [viewingGroupId, setViewingGroupId] = useState(null) // Group being viewed
   
   // Bulk selection state
   const [selectedContacts, setSelectedContacts] = useState([])
@@ -74,7 +76,7 @@ export default function Contacts() {
       }
       
       queryClient.invalidateQueries({ queryKey: ['contact-lists'] })
-      queryClient.invalidateQueries({ queryKey: ['group-members'] })
+      queryClient.invalidateQueries({ queryKey: ['group-members', variables.listId] })
       setShowGroupModal(false)
       setContactsToAdd([])
     },
@@ -84,6 +86,7 @@ export default function Contacts() {
   })
   
   const { data: groupMembers = [] } = useGroupMembers(selectedGroupId)
+  const { data: viewingGroupMembers = [] } = useGroupMembers(viewingGroupId)
 
   const onAdd = async (e) => {
     e.preventDefault()
@@ -98,7 +101,7 @@ export default function Contacts() {
         setToast({ message: `Contact added to "${groupName}" group`, type: 'success' })
         // Invalidate and refetch queries to refresh group member counts immediately
         await queryClient.invalidateQueries({ queryKey: ['contact-lists'] })
-        await queryClient.invalidateQueries({ queryKey: ['group-members'] })
+        await queryClient.invalidateQueries({ queryKey: ['group-members', groupId] })
         await queryClient.refetchQueries({ queryKey: ['contact-lists'] })
       } else {
         setToast({ message: 'Contact added', type: 'success' })
@@ -136,7 +139,7 @@ export default function Contacts() {
       
       // Invalidate and refetch queries to refresh group member counts immediately
       await queryClient.invalidateQueries({ queryKey: ['contact-lists'] })
-      await queryClient.invalidateQueries({ queryKey: ['group-members'] })
+      await queryClient.invalidateQueries({ queryKey: ['group-members', group.id] })
       await queryClient.refetchQueries({ queryKey: ['contact-lists'] })
       
       setToast({ message: `Imported ${contacts.length} contacts into "${groupName}" ${importIsGlobal && isSuperadmin ? 'global ' : ''}group`, type: 'success' })
@@ -190,7 +193,8 @@ export default function Contacts() {
       } else if (bulkGroupName.trim()) {
         // Create new group and add contacts
         const newGroup = await createGroup.mutateAsync({ name: bulkGroupName.trim(), isGlobal: bulkIsGlobal })
-        await addContactsToList(newGroup.id, selectedContacts)
+        groupId = newGroup.id
+        await addContactsToList(groupId, selectedContacts)
         setToast({ message: `Created "${bulkGroupName}" ${bulkIsGlobal ? 'global ' : ''}group with ${selectedContacts.length} contact(s)`, type: 'success' })
       } else {
         setToast({ message: 'Please select a group or enter a new group name', type: 'error' })
@@ -199,7 +203,7 @@ export default function Contacts() {
       
       // Invalidate and refetch queries to refresh group member counts immediately
       await queryClient.invalidateQueries({ queryKey: ['contact-lists'] })
-      await queryClient.invalidateQueries({ queryKey: ['group-members'] })
+      await queryClient.invalidateQueries({ queryKey: ['group-members', groupId] })
       // Force immediate refetch
       await queryClient.refetchQueries({ queryKey: ['contact-lists'] })
       
@@ -333,6 +337,12 @@ export default function Contacts() {
               {r.is_global ? 'Make Private' : 'Make Global'}
             </button>
           )}
+          <button 
+            onClick={() => setViewingGroupId(viewingGroupId === r.id ? null : r.id)} 
+            className="text-green-600 hover:text-green-700 font-medium"
+          >
+            <i className="fas fa-eye mr-1"></i>View
+          </button>
           {canManage ? (
             <>
               <button 
@@ -434,6 +444,40 @@ export default function Contacts() {
           <Table columns={groupColumns} rows={groups} empty="No groups" />
         )}
       </div>
+
+      {/* Viewing Group Contacts */}
+      {viewingGroupId && viewingGroupMembers.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-slate-800">
+              <i className="fas fa-eye mr-2 text-green-600"></i>
+              {groups.find(g => g.id === viewingGroupId)?.name || 'Group'} Contacts
+              <button 
+                onClick={() => setViewingGroupId(null)}
+                className="ml-3 text-sm text-slate-500 hover:text-slate-700"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </h3>
+          </div>
+          <div className="rounded-xl border border-green-200 bg-white overflow-hidden">
+            <Table 
+              columns={[
+                { key: 'first_name', label: 'First Name' },
+                { key: 'last_name', label: 'Last Name' },
+                { key: 'phone', label: 'Phone', render: (r) => formatDisplayE164(r.contacts?.phone || '') },
+              ]} 
+              rows={viewingGroupMembers.map(m => ({
+                first_name: m.contacts?.first_name || '',
+                last_name: m.contacts?.last_name || '',
+                phone: m.contacts?.phone || '',
+                contacts: m.contacts
+              }))} 
+              empty="No contacts in this group" 
+            />
+          </div>
+        </div>
+      )}
 
       {/* Contacts Section */}
       <div className="mt-6">
@@ -564,16 +608,36 @@ export default function Contacts() {
                     <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-normal">Global</span>
                   )}
                 </h3>
-              <button onClick={() => { setShowGroupModal(false); setSelectedGroupId(null); setContactsToAdd([]) }} className="text-slate-600 hover:text-slate-900">
+              <button onClick={() => { setShowGroupModal(false); setSelectedGroupId(null); setContactsToAdd([]); setGroupModalSearch('') }} className="text-slate-600 hover:text-slate-900">
                 <i className="fas fa-times"></i>
               </button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-slate-600 mb-3">
-                  Select contacts to add to this group. Current members: {groupMembers.length}
-                </p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-slate-600">
+                    Select contacts to add to this group. Current members: {groupMembers.length}
+                  </p>
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input
+                      type="text"
+                      value={groupModalSearch}
+                      onChange={(e) => setGroupModalSearch(e.target.value)}
+                      placeholder="Search contacts..."
+                      className="pl-9 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 text-sm w-64"
+                    />
+                    {groupModalSearch && (
+                      <button
+                        onClick={() => setGroupModalSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className="max-h-96 overflow-auto border border-slate-300 rounded-lg">
                   <table className="w-full text-sm">
                     <thead className="bg-gradient-to-r from-blue-400 to-blue-500 text-white sticky top-0">
@@ -583,14 +647,29 @@ export default function Contacts() {
                             type="checkbox"
                             checked={(() => {
                               const memberIds = groupMembers.map(m => m.contact_id)
-                              const availableContacts = data.filter(c => !memberIds.includes(c.id))
-                              return contactsToAdd.length === availableContacts.length && availableContacts.length > 0
+                              const searchTerm = groupModalSearch.toLowerCase()
+                              const filtered = data.filter(c => {
+                                if (memberIds.includes(c.id)) return false
+                                return !searchTerm || 
+                                  c.first_name?.toLowerCase().includes(searchTerm) || 
+                                  c.last_name?.toLowerCase().includes(searchTerm) || 
+                                  c.phone?.includes(searchTerm)
+                              })
+                              return contactsToAdd.length === filtered.length && filtered.length > 0
                             })()}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 // Exclude contacts already in group
                                 const memberIds = groupMembers.map(m => m.contact_id)
-                                setContactsToAdd(data.filter(c => !memberIds.includes(c.id)).map(c => c.id))
+                                const searchTerm = groupModalSearch.toLowerCase()
+                                const filtered = data.filter(c => {
+                                  if (memberIds.includes(c.id)) return false
+                                  return !searchTerm || 
+                                    c.first_name?.toLowerCase().includes(searchTerm) || 
+                                    c.last_name?.toLowerCase().includes(searchTerm) || 
+                                    c.phone?.includes(searchTerm)
+                                })
+                                setContactsToAdd(filtered.map(c => c.id))
                               } else {
                                 setContactsToAdd([])
                               }
@@ -605,39 +684,50 @@ export default function Contacts() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.map(contact => {
-                        const isInGroup = groupMembers.some(m => m.contact_id === contact.id)
-                        const isSelected = contactsToAdd.includes(contact.id)
-                        return (
-                          <tr key={contact.id} className={`odd:bg-slate-50 ${isSelected ? 'bg-blue-50' : ''} text-slate-900`}>
-                            <td className="px-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                disabled={isInGroup}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setContactsToAdd([...contactsToAdd, contact.id])
-                                  } else {
-                                    setContactsToAdd(contactsToAdd.filter(id => id !== contact.id))
-                                  }
-                                }}
-                                className="rounded border-slate-300"
-                              />
-                            </td>
-                            <td className="px-3 py-2 text-slate-900">{contact.first_name}</td>
-                            <td className="px-3 py-2 text-slate-900">{contact.last_name}</td>
-                            <td className="px-3 py-2 font-mono text-xs text-slate-900">{formatDisplayE164(contact.phone)}</td>
-                            <td className="px-3 py-2">
-                              {isInGroup ? (
-                                <span className="text-xs text-green-600"><i className="fas fa-check-circle mr-1"></i>In Group</span>
-                              ) : (
-                                <span className="text-xs text-slate-600">Not in group</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
+                      {(() => {
+                        const memberIds = groupMembers.map(m => m.contact_id)
+                        const searchTerm = groupModalSearch.toLowerCase()
+                        const filtered = data.filter(c => {
+                          if (memberIds.includes(c.id)) return false
+                          return !searchTerm || 
+                            c.first_name?.toLowerCase().includes(searchTerm) || 
+                            c.last_name?.toLowerCase().includes(searchTerm) || 
+                            c.phone?.includes(searchTerm)
+                        })
+                        return filtered.map(contact => {
+                          const isInGroup = groupMembers.some(m => m.contact_id === contact.id)
+                          const isSelected = contactsToAdd.includes(contact.id)
+                          return (
+                            <tr key={contact.id} className={`odd:bg-slate-50 ${isSelected ? 'bg-blue-50' : ''} text-slate-900`}>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  disabled={isInGroup}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setContactsToAdd([...contactsToAdd, contact.id])
+                                    } else {
+                                      setContactsToAdd(contactsToAdd.filter(id => id !== contact.id))
+                                    }
+                                  }}
+                                  className="rounded border-slate-300"
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-slate-900">{contact.first_name}</td>
+                              <td className="px-3 py-2 text-slate-900">{contact.last_name}</td>
+                              <td className="px-3 py-2 font-mono text-xs text-slate-900">{formatDisplayE164(contact.phone)}</td>
+                              <td className="px-3 py-2">
+                                {isInGroup ? (
+                                  <span className="text-xs text-green-600"><i className="fas fa-check-circle mr-1"></i>In Group</span>
+                                ) : (
+                                  <span className="text-xs text-slate-600">Not in group</span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -645,7 +735,7 @@ export default function Contacts() {
               
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
                 <button
-                  onClick={() => { setShowGroupModal(false); setSelectedGroupId(null); setContactsToAdd([]) }}
+                  onClick={() => { setShowGroupModal(false); setSelectedGroupId(null); setContactsToAdd([]); setGroupModalSearch('') }}
                   className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700"
                 >
                   Cancel

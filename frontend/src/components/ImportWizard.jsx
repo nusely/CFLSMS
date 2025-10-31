@@ -137,7 +137,23 @@ export default function ImportWizard({ open, onClose, onConfirm, isSuperadmin = 
       return
     }
     
-    onConfirm(out, groupName.trim())
+    // Remove duplicates based on phone number
+    const seen = new Set()
+    const uniqueContacts = out.filter(contact => {
+      if (seen.has(contact.phone)) {
+        return false // Skip duplicate
+      }
+      seen.add(contact.phone)
+      return true
+    })
+    
+    // If duplicates were found, show info
+    if (uniqueContacts.length < out.length) {
+      const duplicateCount = out.length - uniqueContacts.length
+      alert(`Found ${duplicateCount} duplicate contact(s) based on phone number. They have been automatically removed.`)
+    }
+    
+    onConfirm(uniqueContacts, groupName.trim())
   }
 
   if (!open) return null

@@ -8,12 +8,15 @@ export default function Welcome() {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
+    // If already authenticated, redirect to dashboard immediately
+    if (!authLoading && session) {
+      navigate('/dashboard', { replace: true })
+      return
+    }
+    
     // Trigger slide-in animation after component mounts
     setTimeout(() => setIsVisible(true), 50)
-  }, [])
-
-  // If already authenticated, still show welcome screen but Sign In will redirect to dashboard
-  // This allows users to see the welcome screen even if they're already logged in
+  }, [session, authLoading, navigate])
 
   const handleSignIn = () => {
     navigate('/login')
