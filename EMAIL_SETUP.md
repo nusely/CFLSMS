@@ -23,7 +23,20 @@ Welcome to CFL SMS - Set Up Your Account
 **Body (HTML):**
 Copy the contents from `magic-link-email-template.html` and paste into the Supabase template editor.
 
-### Step 3: Test the Email
+### Step 3: Configure Redirect URLs (CRITICAL!)
+
+To prevent localhost redirect issues, configure allowed redirect URLs in Supabase:
+
+1. Go to Supabase Dashboard → **Authentication** → **URL Configuration**
+2. Set **Site URL** to: `https://sms.cflhymnal.com`
+3. Add to **Redirect URLs**:
+   ```
+   https://sms.cflhymnal.com/**
+   http://localhost:5173/**
+   ```
+4. Save changes
+
+### Step 4: Test the Email
 
 1. Go to your Admins page in the app
 2. Send a test invitation to your own email
@@ -32,6 +45,7 @@ Copy the contents from `magic-link-email-template.html` and paste into the Supab
    - Content is readable
    - Button link works
    - Styling looks good
+   - Link redirects to `sms.cflhymnal.com` (NOT localhost)
 
 ### Important Notes
 
@@ -39,6 +53,7 @@ Copy the contents from `magic-link-email-template.html` and paste into the Supab
 - **No SMTP Needed:** Using Supabase's built-in email service
 - **Template Variables:** Use Supabase's built-in variables like `{{ .ConfirmationURL }}`
 - **Logo URL:** Make sure `sms.cflhymnal.com` is deployed so the logo loads
+- **Redirect URLs:** Must be configured in Supabase Dashboard to allow redirects to your production domain
 
 ### That's It!
 
