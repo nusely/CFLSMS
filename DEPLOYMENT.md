@@ -26,9 +26,9 @@ The frontend is already configured with:
 4. Configure the build:
    - **Project name:** `cfl-sms` (or your choice)
    - **Production branch:** `main`
-   - **Framework preset:** `VitePreset`
-   - **Build command:** `cd frontend && npm run build`
-   - **Build output directory:** `frontend/dist`
+   - **Framework preset:** `VitePreset` (may show wrong auto-detected commands, ignore them)
+   - **Build command:** `cd frontend && npm run build` ⚠️ **IMPORTANT: Override the auto-detected command**
+   - **Build output directory:** `frontend/dist` ⚠️ **IMPORTANT: Override to `frontend/dist`, NOT `.vitepress/dist`**
 
 ### 3. Add Environment Variables
 
