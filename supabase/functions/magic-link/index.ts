@@ -31,14 +31,14 @@ Deno.serve(async (req) => {
     const baseUrl = redirectTo || 'http://localhost:5173'
     const redirectUrl = `${baseUrl}/set-password?reset=true`
     
-    // Use admin.generateLink to send magic link email
+    // Use signInWithOtp to send magic link email
     // This will use the "Magic Link" template configured in Supabase Dashboard
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: redirectUrl
-      }
+    const { data, error } = await supabase.auth.signInWithOtp({ 
+      email, 
+      options: { 
+        emailRedirectTo: redirectUrl,
+        shouldCreateUser: true // Allow creating new users via magic link
+      } 
     })
     
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
