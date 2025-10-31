@@ -37,6 +37,7 @@ Go to Pages Settings → Environment Variables and add:
 ```
 VITE_SUPABASE_URL=https://phbnbrxrreweeeulmpqt.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoYm5icnhycmV3ZWVldWxtcHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3OTQ1NzEsImV4cCI6MjA3NzM3MDU3MX0.zdoAWyHMCyYbMR0jFrylCW5qxxqYoD9jBjWLHS6WnJI
+VITE_APP_URL=https://sms.cflhymnal.com
 ```
 
 ### 4. Configure Custom Domain

@@ -21,8 +21,9 @@ export async function updateUserRole(userId, role) {
 }
 
 export async function sendMagicLink(email) {
-  // Use frontend origin for redirect URL
-  const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+  // Use environment variable for production URL, fallback to current origin
+  const productionUrl = import.meta.env.VITE_APP_URL || 'https://sms.cflhymnal.com'
+  const redirectTo = typeof window !== 'undefined' ? productionUrl : 'http://localhost:5173'
   const { data, error } = await supabase.functions.invoke('magic-link', {
     body: { email, redirectTo },
   })

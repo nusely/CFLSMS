@@ -7,7 +7,7 @@ Use Supabase's built-in email service - no SMTP configuration needed!
 ### Step 1: Configure Email Template
 
 1. Go to Supabase Dashboard → **Authentication** → **Email Templates**
-2. Click on **Magic Link** template
+2. Click on **Magic Link** template (NOT "Confirm signup" - that's different!)
 3. You can customize:
    - **Subject line**
    - **Email body** (HTML supported)
