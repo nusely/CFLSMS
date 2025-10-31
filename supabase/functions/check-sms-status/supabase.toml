@@ -1,0 +1,4 @@
+name = "check-sms-status"
+verify_jwt = false
+
+

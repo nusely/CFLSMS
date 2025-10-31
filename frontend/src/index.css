@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App-level styles */
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+  max-width: 100vw; /* Ensure no content exceeds viewport width */
+}
+
+body {
+  @apply bg-white text-slate-900;
+  background: white;
+  position: relative;
+}
+
+/* Logo spinner animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Slide animations for splash/welcome screens */
+@keyframes slideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-out {
+  animation: slideOut 0.5s ease-in-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-in-out forwards;
+}
+

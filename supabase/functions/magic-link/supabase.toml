@@ -1,0 +1,3 @@
+name = "magic-link"
+verify_jwt = false
+

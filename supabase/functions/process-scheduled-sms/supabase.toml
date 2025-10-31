@@ -1,0 +1,3 @@
+name = "process-scheduled-sms"
+verify_jwt = false
+
