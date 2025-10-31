@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useContacts, useAddContact, useUpsertContacts, useDeleteContact } from '../hooks/useContacts'
-import { useContactLists, useGroupMembers, useCreateContactList } from '../hooks/useGroups'
+import { useContactLists, useGroupMembers, useCreateContactList, useDeleteContactList, useUpdateContactList } from '../hooks/useGroups'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { addContactsToList, deleteContact, updateContactList } from '../api/contactsService'
 import ImportWizard from '../components/ImportWizard'
@@ -20,6 +20,8 @@ export default function Contacts() {
   const upsert = useUpsertContacts()
   const remove = useDeleteContact()
   const createGroup = useCreateContactList()
+  const deleteGroup = useDeleteContactList()
+  const updateGroup = useUpdateContactList()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -28,6 +30,10 @@ export default function Contacts() {
   const [showGroupModal, setShowGroupModal] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [contactsToAdd, setContactsToAdd] = useState([]) // Selected contacts to add to group
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [renamingGroupId, setRenamingGroupId] = useState(null)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [deletingGroupId, setDeletingGroupId] = useState(null)
   
   // Bulk selection state
   const [selectedContacts, setSelectedContacts] = useState([])
@@ -267,6 +273,32 @@ export default function Contacts() {
     }
   }
 
+  const handleRenameGroup = async () => {
+    if (!newGroupName.trim()) {
+      setToast({ message: 'Please enter a new name', type: 'error' })
+      return
+    }
+    try {
+      await updateGroup.mutateAsync({ listId: renamingGroupId, updates: { name: newGroupName.trim() } })
+      setToast({ message: 'Group renamed successfully', type: 'success' })
+      setShowRenameModal(false)
+      setRenamingGroupId(null)
+      setNewGroupName('')
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to rename group', type: 'error' })
+    }
+  }
+
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      await deleteGroup.mutateAsync(groupId)
+      setToast({ message: 'Group deleted successfully', type: 'success' })
+      setDeletingGroupId(null)
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to delete group', type: 'error' })
+    }
+  }
+
   const groupColumns = [
     { key: 'name', label: 'Group Name' },
     { 
@@ -302,15 +334,40 @@ export default function Contacts() {
             </button>
           )}
           {canManage ? (
-            <button 
-              onClick={() => {
-                setSelectedGroupId(r.id)
-                setShowGroupModal(true)
-              }} 
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              <i className="fas fa-user-plus mr-1"></i>Manage
-            </button>
+            <>
+              <button 
+                onClick={() => {
+                  setRenamingGroupId(r.id)
+                  setNewGroupName(r.name)
+                  setShowRenameModal(true)
+                }} 
+                className="text-xs px-2 py-1 rounded border border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 font-medium"
+                title="Rename group"
+              >
+                <i className="fas fa-edit"></i>
+              </button>
+              <button 
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete "${r.name}"? This action cannot be undone.`)) {
+                    setDeletingGroupId(r.id)
+                    handleDeleteGroup(r.id)
+                  }
+                }} 
+                className="text-xs px-2 py-1 rounded border border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 font-medium"
+                title="Delete group"
+              >
+                <i className="fas fa-trash"></i>
+              </button>
+              <button 
+                onClick={() => {
+                  setSelectedGroupId(r.id)
+                  setShowGroupModal(true)
+                }} 
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <i className="fas fa-user-plus mr-1"></i>Manage
+              </button>
+            </>
           ) : (
             <span className="text-xs text-slate-500 italic" title="Global groups can only be managed by superadmin">
               <i className="fas fa-globe mr-1"></i>Global
@@ -713,6 +770,73 @@ export default function Contacts() {
                   className="rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-500 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {createGroup.isPending ? 'Processing...' : 'Add to Group'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Rename Group Modal */}
+      {showRenameModal && renamingGroupId && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-blue-200 bg-white shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-500">
+                Rename Group
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowRenameModal(false)
+                  setRenamingGroupId(null)
+                  setNewGroupName('')
+                }} 
+                className="text-slate-600 hover:text-slate-900"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700">
+                  New Group Name
+                </label>
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Enter new group name..."
+                  className="w-full rounded-lg bg-slate-50 border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameGroup()
+                    if (e.key === 'Escape') {
+                      setShowRenameModal(false)
+                      setRenamingGroupId(null)
+                      setNewGroupName('')
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
+                <button
+                  onClick={() => {
+                    setShowRenameModal(false)
+                    setRenamingGroupId(null)
+                    setNewGroupName('')
+                  }}
+                  className="rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRenameGroup}
+                  disabled={!newGroupName.trim() || updateGroup.isPending}
+                  className="rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-500 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {updateGroup.isPending ? 'Renaming...' : 'Rename'}
                 </button>
               </div>
             </div>

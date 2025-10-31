@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { listContactListsWithCount, createContactList, deleteContactList, getGroupPhones, listMembers } from '../api/contactsService'
+import { listContactListsWithCount, createContactList, deleteContactList, updateContactList, getGroupPhones, listMembers } from '../api/contactsService'
 
 export function useContactLists() {
   return useQuery({ 
@@ -25,6 +25,16 @@ export function useDeleteContactList() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contact-lists'] })
       qc.invalidateQueries({ queryKey: ['contacts'] })
+    }
+  })
+}
+
+export function useUpdateContactList() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ listId, updates }) => updateContactList(listId, updates),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contact-lists'] })
     }
   })
 }
