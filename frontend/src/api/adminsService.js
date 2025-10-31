@@ -31,3 +31,11 @@ export async function sendMagicLink(email) {
   return data
 }
 
+export async function deleteUser(userId) {
+  const { data, error } = await supabase.functions.invoke('delete-user', {
+    body: { userId },
+  })
+  if (error) throw error
+  return data
+}
+

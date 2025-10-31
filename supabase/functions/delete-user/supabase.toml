@@ -1,0 +1,3 @@
+name = "delete-user"
+verify_jwt = false
+

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Table from '../components/Table'
 import Toast from '../components/Toast'
 import Loader from '../components/Loader'
-import { listProfiles, sendMagicLink, updateUserRole } from '../api/adminsService'
+import { listProfiles, sendMagicLink, updateUserRole, deleteUser } from '../api/adminsService'
 
 export default function Admins() {
   const [rows, setRows] = useState([])
@@ -54,6 +54,19 @@ export default function Admins() {
     }
   }
 
+  const onDelete = async (userId, email) => {
+    if (!confirm(`Are you sure you want to delete ${email}? This action cannot be undone.`)) {
+      return
+    }
+    try {
+      await deleteUser(userId)
+      setToast({ message: 'User deleted successfully', type: 'success' })
+      load()
+    } catch (e) {
+      setToast({ message: e.message || 'Failed to delete user', type: 'error' })
+    }
+  }
+
   const columns = [
     { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role', render: (r) => (
@@ -64,13 +77,22 @@ export default function Admins() {
     ) },
     { key: 'created_at', label: 'Created', render: (r) => new Date(r.created_at).toLocaleString() },
     { key: 'actions', label: 'Actions', render: (r) => (
-      <button
-        onClick={() => onResendLink(r.email)}
-        className="text-sm rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-500 text-white px-3 py-1.5 font-medium"
-        title="Resend magic link invitation"
-      >
-        <i className="fas fa-envelope mr-1"></i>Resend Link
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onResendLink(r.email)}
+          className="text-sm rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-500 text-white px-3 py-1.5 font-medium"
+          title="Resend magic link invitation"
+        >
+          <i className="fas fa-envelope mr-1"></i>Resend Link
+        </button>
+        <button
+          onClick={() => onDelete(r.id, r.email)}
+          className="text-sm rounded-lg bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-500 text-white px-3 py-1.5 font-medium"
+          title="Delete user"
+        >
+          <i className="fas fa-trash mr-1"></i>Delete
+        </button>
+      </div>
     ) },
   ]
 
