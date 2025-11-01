@@ -9,6 +9,7 @@ export default function SetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [passwordJustSet, setPasswordJustSet] = useState(false)
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { session } = useAuthContext()
@@ -16,6 +17,9 @@ export default function SetPassword() {
   
   // Redirect if not authenticated or if password already set
   useEffect(() => {
+    // Don't redirect if we just set the password and are about to sign out
+    if (passwordJustSet) return
+    
     if (!session) {
       navigate('/login')
       return
@@ -41,7 +45,7 @@ export default function SetPassword() {
       }
     }
     checkRole()
-  }, [session, navigate, isReset])
+  }, [session, navigate, isReset, passwordJustSet])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -69,15 +73,19 @@ export default function SetPassword() {
       
       if (updateError) throw updateError
 
+      // Mark password as just set to prevent useEffect redirects
+      setPasswordJustSet(true)
+      
       // Show success message
       setMessage('Password set successfully! Please sign in with your new password.')
-      
+      setLoading(false)
+
       // Sign out and redirect to login page
       // This ensures they log in with the new password
       setTimeout(async () => {
         await supabase.auth.signOut()
-        window.location.href = '/login'
-      }, 500)
+        navigate('/login', { replace: true })
+      }, 1500)
 
     } catch (err) {
       console.error('Password update error:', err)
