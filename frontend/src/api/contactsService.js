@@ -126,6 +126,8 @@ export async function listMembers(listId) {
     .from('contact_list_members')
     .select('contact_id, contacts(*)')
     .eq('list_id', listId)
+    .order('contacts(first_name)', { ascending: true })
+    .order('contacts(last_name)', { ascending: true })
   if (error) throw error
   return data
 }
