@@ -82,9 +82,16 @@ export default function SetPassword() {
 
       // Sign out and redirect to login page
       // This ensures they log in with the new password
-      setTimeout(async () => {
-        await supabase.auth.signOut()
-        navigate('/login', { replace: true })
+      setTimeout(() => {
+        console.log('Signing out and redirecting to login...')
+        supabase.auth.signOut().then(() => {
+          console.log('Sign out complete, redirecting...')
+          window.location.href = '/login'
+        }).catch(err => {
+          console.error('Sign out error:', err)
+          // Redirect anyway even if sign out fails
+          window.location.href = '/login'
+        })
       }, 1500)
 
     } catch (err) {
