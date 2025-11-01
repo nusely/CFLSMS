@@ -126,10 +126,27 @@ export async function listMembers(listId) {
     .from('contact_list_members')
     .select('contact_id, contacts(*)')
     .eq('list_id', listId)
-    .order('contacts(first_name)', { ascending: true })
-    .order('contacts(last_name)', { ascending: true })
   if (error) throw error
-  return data
+  
+  // Sort alphabetically by first name, then last name
+  const sorted = data.sort((a, b) => {
+    const firstNameA = (a.contacts?.first_name || '').toLowerCase()
+    const firstNameB = (b.contacts?.first_name || '').toLowerCase()
+    const lastNameA = (a.contacts?.last_name || '').toLowerCase()
+    const lastNameB = (b.contacts?.last_name || '').toLowerCase()
+    
+    // First compare by first name
+    if (firstNameA < firstNameB) return -1
+    if (firstNameA > firstNameB) return 1
+    
+    // If first names are equal, compare by last name
+    if (lastNameA < lastNameB) return -1
+    if (lastNameA > lastNameB) return 1
+    
+    return 0
+  })
+  
+  return sorted
 }
 
 // Get all phone numbers from a group
