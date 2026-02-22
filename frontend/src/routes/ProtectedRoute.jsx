@@ -45,10 +45,10 @@ export default function ProtectedRoute() {
         return
       }
 
-      // Check if this is a magic link login (via URL hash or query param)
+      // Check if this is a magic link or invite login (via URL hash or query param)
       const hash = window.location.hash || ''
       const urlParams = new URLSearchParams(window.location.search)
-      const isMagicLinkLogin = hash.includes('access_token') || hash.includes('type=recovery') || urlParams.get('reset') === 'true'
+      const isMagicLinkLogin = hash.includes('access_token') || hash.includes('type=recovery') || hash.includes('type=invite') || urlParams.get('reset') === 'true'
       
       // Only redirect to set-password if:
       // 1. User logged in via magic link AND password not set yet

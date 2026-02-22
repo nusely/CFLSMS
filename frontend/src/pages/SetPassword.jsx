@@ -17,7 +17,7 @@ export default function SetPassword() {
   
   // Redirect if not authenticated or if password already set
   useEffect(() => {
-    // Don't redirect if we just set the password and are about to sign out
+    // Don't redirect if we just set the password and are about to redirect to dashboard
     if (passwordJustSet) return
     
     if (!session) {
@@ -65,38 +65,42 @@ export default function SetPassword() {
     }
 
     try {
-      // Update password
-      const { error: updateError } = await supabase.auth.updateUser({
+      // Update password (with timeout - clock skew can cause hangs)
+      const updatePromise = supabase.auth.updateUser({
         password: password,
         data: { password_set: true, password_set_at: new Date().toISOString() }
       })
-      
+      const timeoutMs = 15000
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Your device clock may be out of sync—please sync system time and try again.')), timeoutMs)
+      )
+      const { error: updateError } = await Promise.race([updatePromise, timeoutPromise])
+
       if (updateError) throw updateError
 
       // Mark password as just set to prevent useEffect redirects
       setPasswordJustSet(true)
       
       // Show success message
-      setMessage('Password set successfully! Please sign in with your new password.')
+      setMessage('Password set successfully! Redirecting to dashboard...')
       setLoading(false)
 
-      // Sign out and redirect to login page
-      // This ensures they log in with the new password
-      setTimeout(() => {
-        console.log('Signing out and redirecting to login...')
-        supabase.auth.signOut().then(() => {
-          console.log('Sign out complete, redirecting...')
-          window.location.href = '/login'
-        }).catch(err => {
-          console.error('Sign out error:', err)
-          // Redirect anyway even if sign out fails
-          window.location.href = '/login'
-        })
-      }, 1500)
+      // Refresh session to pick up new metadata, then redirect to dashboard
+      try {
+        await supabase.auth.refreshSession()
+      } catch {
+        // Continue to dashboard even if refresh fails—password was set
+      }
+      setTimeout(() => { window.location.href = '/dashboard' }, 1000)
 
     } catch (err) {
       console.error('Password update error:', err)
-      setMessage(err.message || 'Failed to set password. Please try again.')
+      const errMsg = err?.message || ''
+      const isClockError = errMsg.toLowerCase().includes('future') || errMsg.toLowerCase().includes('clock')
+      const friendlyMessage = isClockError
+        ? 'Your device clock may be out of sync. Please sync your system time (Settings → Time & Language) and try the invite link again.'
+        : (errMsg || 'Failed to set password. Please try again.')
+      setMessage(friendlyMessage)
       setLoading(false)
     }
   }
@@ -159,13 +163,22 @@ export default function SetPassword() {
         >
           {loading ? 'Setting password...' : 'Set Password'}
         </button>
-        {message && message.includes('success') && (
+        {message && message.includes('success') ? (
           <div className="text-center">
+            <a 
+              href="/dashboard" 
+              className="text-sm text-blue-600 hover:text-blue-700 underline"
+            >
+              Continue to Dashboard →
+            </a>
+          </div>
+        ) : (
+          <div className="text-center pt-1">
             <a 
               href="/login" 
               className="text-sm text-blue-600 hover:text-blue-700 underline"
             >
-              Go to Sign In →
+              Already have a password? Sign in →
             </a>
           </div>
         )}

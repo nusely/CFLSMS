@@ -368,15 +368,15 @@ export default function Contacts() {
               >
                 <i className="fas fa-trash"></i>
               </button>
-              <button 
-                onClick={() => {
-                  setSelectedGroupId(r.id)
-                  setShowGroupModal(true)
-                }} 
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                <i className="fas fa-user-plus mr-1"></i>Manage
-              </button>
+            <button 
+              onClick={() => {
+                setSelectedGroupId(r.id)
+                setShowGroupModal(true)
+              }} 
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <i className="fas fa-user-plus mr-1"></i>Manage
+            </button>
             </>
           ) : (
             <span className="text-xs text-slate-500 italic" title="Global groups can only be managed by superadmin">
@@ -617,8 +617,8 @@ export default function Contacts() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm text-slate-600">
-                    Select contacts to add to this group. Current members: {groupMembers.length}
-                  </p>
+                  Select contacts to add to this group. Current members: {groupMembers.length}
+                </p>
                   <div className="relative">
                     <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                     <input
@@ -695,37 +695,37 @@ export default function Contacts() {
                             c.phone?.includes(searchTerm)
                         })
                         return filtered.map(contact => {
-                          const isInGroup = groupMembers.some(m => m.contact_id === contact.id)
-                          const isSelected = contactsToAdd.includes(contact.id)
-                          return (
+                        const isInGroup = groupMembers.some(m => m.contact_id === contact.id)
+                        const isSelected = contactsToAdd.includes(contact.id)
+                        return (
                             <tr key={contact.id} className={`odd:bg-slate-50 ${isSelected ? 'bg-blue-50' : ''} text-slate-900`}>
-                              <td className="px-3 py-2">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  disabled={isInGroup}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setContactsToAdd([...contactsToAdd, contact.id])
-                                    } else {
-                                      setContactsToAdd(contactsToAdd.filter(id => id !== contact.id))
-                                    }
-                                  }}
-                                  className="rounded border-slate-300"
-                                />
-                              </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                disabled={isInGroup}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setContactsToAdd([...contactsToAdd, contact.id])
+                                  } else {
+                                    setContactsToAdd(contactsToAdd.filter(id => id !== contact.id))
+                                  }
+                                }}
+                                className="rounded border-slate-300"
+                              />
+                            </td>
                               <td className="px-3 py-2 text-slate-900">{contact.first_name}</td>
                               <td className="px-3 py-2 text-slate-900">{contact.last_name}</td>
                               <td className="px-3 py-2 font-mono text-xs text-slate-900">{formatDisplayE164(contact.phone)}</td>
-                              <td className="px-3 py-2">
-                                {isInGroup ? (
-                                  <span className="text-xs text-green-600"><i className="fas fa-check-circle mr-1"></i>In Group</span>
-                                ) : (
+                            <td className="px-3 py-2">
+                              {isInGroup ? (
+                                <span className="text-xs text-green-600"><i className="fas fa-check-circle mr-1"></i>In Group</span>
+                              ) : (
                                   <span className="text-xs text-slate-600">Not in group</span>
-                                )}
-                              </td>
-                            </tr>
-                          )
+                              )}
+                            </td>
+                          </tr>
+                        )
                         })
                       })()}
                     </tbody>

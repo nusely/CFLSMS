@@ -13,12 +13,14 @@ export function AuthProvider({ children }) {
       // Handle magic link authentication from URL hash
       const { data: { session: hashSession } } = await supabase.auth.getSession()
       
-      // Also check URL hash for magic link tokens
+      // Also check URL hash for magic link / invite tokens
       if (window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        if (hashParams.get('access_token') || hashParams.get('type') === 'recovery') {
-          // Clear hash after processing
-          window.history.replaceState(null, '', window.location.pathname)
+        const isAuthHash = hashParams.get('access_token') || hashParams.get('type') === 'recovery' || hashParams.get('type') === 'invite'
+        if (isAuthHash) {
+          // Clear hash after processing, preserve query params (e.g. ?reset=true)
+          const cleanUrl = window.location.pathname + window.location.search
+          window.history.replaceState(null, '', cleanUrl)
         }
       }
       
@@ -48,7 +50,7 @@ export function AuthProvider({ children }) {
       setSession(newSession)
       if (newSession?.user) {
         // If password was updated, refresh the session to get new metadata
-        if (event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED') {
+        if (event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED' || event === 'USER_CREATED') {
           const { data: { session: refreshed } } = await supabase.auth.refreshSession()
           if (refreshed) {
             setSession(refreshed)

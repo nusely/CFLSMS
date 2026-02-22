@@ -18,7 +18,7 @@ export default function Splash() {
         if (session) {
           navigate('/dashboard', { replace: true })
         } else {
-          navigate('/welcome', { replace: true })
+        navigate('/welcome', { replace: true })
         }
       }, 500) // Match animation duration (0.5s)
     }, 3500) // 3.5 seconds

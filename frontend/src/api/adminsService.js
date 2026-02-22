@@ -20,6 +20,19 @@ export async function updateUserRole(userId, role) {
   return data
 }
 
+async function getEdgeFunctionError(error) {
+  if (!error) return null
+  if (error.context && typeof error.context?.json === 'function') {
+    try {
+      const body = await error.context.json()
+      return body?.error || body?.message || null
+    } catch {
+      return null
+    }
+  }
+  return error.message || null
+}
+
 export async function sendMagicLink(email) {
   // Use environment variable for production URL, fallback to current origin
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
@@ -27,7 +40,10 @@ export async function sendMagicLink(email) {
   const { data, error } = await supabase.functions.invoke('magic-link', {
     body: { email, redirectTo },
   })
-  if (error) throw error
+  if (error) {
+    const msg = await getEdgeFunctionError(error)
+    throw new Error(msg || error.message || 'Edge function failed')
+  }
   return data
 }
 
@@ -35,7 +51,10 @@ export async function deleteUser(userId) {
   const { data, error } = await supabase.functions.invoke('delete-user', {
     body: { userId },
   })
-  if (error) throw error
+  if (error) {
+    const msg = await getEdgeFunctionError(error)
+    throw new Error(msg || error.message || 'Edge function failed')
+  }
   return data
 }
 
