@@ -7,7 +7,7 @@ Use Supabase's built-in email service - no SMTP configuration needed!
 ### Step 1: Configure Email Template
 
 1. Go to Supabase Dashboard → **Authentication** → **Email Templates**
-2. Click on **Magic Link** template (NOT "Confirm signup" - that's different!)
+2. Click on **Invite user** template (this is used by `inviteUserByEmail` - NOT "Magic Link" or "Confirm signup")
 3. You can customize:
    - **Subject line**
    - **Email body** (HTML supported)
@@ -46,6 +46,11 @@ To prevent localhost redirect issues, configure allowed redirect URLs in Supabas
    - Button link works
    - Styling looks good
    - Link redirects to `sms.cflhymnal.com` (NOT localhost)
+
+### Troubleshooting
+
+- **"Session was issued in the future" / form stuck:** Your device clock may be out of sync. Sync your system time (Windows: Settings → Time & Language → Sync now) and try the invite link again.
+- **Link expired:** Invite links expire in 24 hours. Ask a superadmin to resend the invite.
 
 ### Important Notes
 

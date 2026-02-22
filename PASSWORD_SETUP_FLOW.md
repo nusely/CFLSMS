@@ -6,22 +6,22 @@ Users must set a password after receiving a magic link invitation. Superadmins c
 ## Flow
 
 ### 1. **New User Invitation** (First Time)
-1. Superadmin sends magic link via `/admins` page
-2. User receives email with magic link
-3. User clicks magic link → Redirects to `/set-password?reset=true`
+1. Superadmin sends invite via `/admins` page
+2. User receives email (uses **Invite user** template in Supabase)
+3. User clicks link → Redirects to `/set-password?reset=true`
 4. User is authenticated automatically
 5. User sets password (min 6 characters)
 6. System marks password as set (`password_set: true` in user_metadata)
-7. User redirected to dashboard
+7. User redirected to dashboard (stays logged in)
 
 ### 2. **Password Reset** (Forgot Password)
 1. User forgets password
-2. Superadmin sends new invitation via `/admins` page
-3. User receives email with magic link
-4. User clicks magic link → Redirects to `/set-password?reset=true`
+2. Superadmin resends invite via `/admins` page
+3. User receives email with new link
+4. User clicks link → Redirects to `/set-password?reset=true`
 5. User sets new password
 6. System updates `password_set` flag
-7. User redirected to dashboard
+7. User redirected to dashboard (stays logged in)
 
 ### 3. **Normal Login** (Password Already Set)
 1. User goes to `/login`
